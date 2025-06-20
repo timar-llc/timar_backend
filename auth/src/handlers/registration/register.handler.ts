@@ -1,0 +1,74 @@
+import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
+import { Inject } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import { ConfirmationCodeSentEvent } from '../../events/registration';
+import { RedisService } from '../../redis/redis.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from '../../entities/user.entity';
+import { Repository } from 'typeorm';
+import { RegisterCommand } from 'src/commands/registration/register.command';
+import { ClientProxy } from '@nestjs/microservices';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
+
+@CommandHandler(RegisterCommand)
+export class RegisterHandler implements ICommandHandler<RegisterCommand> {
+  constructor(
+    private readonly redisService: RedisService,
+    private readonly eventBus: EventBus,
+    @Inject('NOTIFICATION_SERVICE') private readonly client: ClientProxy,
+    @InjectPinoLogger('AuthService')
+    private readonly logger: PinoLogger,
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
+  ) {}
+
+  async execute(command: RegisterCommand) {
+    const { email, password } = command;
+
+    // Хешируем пароль
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const existingUserInRedis = await this.redisService.get(
+      `registration:${email}`,
+    );
+    if (existingUserInRedis) {
+      throw new Error('User already registered');
+    }
+    const existingUser = await this.usersRepository.findOne({
+      where: { email },
+    });
+    if (existingUser) {
+      throw new Error('User already registered');
+    }
+
+    // Генерируем код подтверждения
+    const confirmationCode = Math.floor(
+      100000 + Math.random() * 900000,
+    ).toString();
+
+    // Отправляем команду и ждём ack
+    this.client
+      .emit('notification.registration.send_registration_code', {
+        email,
+        passwordHash,
+        code: confirmationCode,
+      })
+      .subscribe((pubAck) => {
+        console.log(pubAck);
+      });
+
+    this.logger.info('Sending registration code to notification service');
+    // Сохраняем в Redis с TTL только после успешной отправки письма
+    await this.redisService.set(
+      `registration:${email}`,
+      JSON.stringify({ email, passwordHash, confirmationCode }),
+      600, // 10 минут TTL
+    );
+    this.logger.info('Registration code saved in Redis');
+
+    // Публикуем событие — код подтверждения успешно отправлен
+    this.eventBus.publish(
+      new ConfirmationCodeSentEvent(email, confirmationCode),
+    );
+  }
+}
