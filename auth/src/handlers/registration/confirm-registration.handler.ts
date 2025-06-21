@@ -1,14 +1,12 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Injectable } from '@nestjs/common';
 import { ConfirmRegistrationCommand } from 'src/commands/registration/confirm-registration.command';
 import { RedisService } from '../../redis/redis.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../../entities/user.entity';
 import { Repository } from 'typeorm';
-import { PinoLogger } from 'nestjs-pino';
-import { InjectPinoLogger } from 'nestjs-pino';
+import { RpcException } from '@nestjs/microservices';
+import { LokiLoggerService } from '@djeka07/nestjs-loki-logger';
 
-@Injectable()
 @CommandHandler(ConfirmRegistrationCommand)
 export class ConfirmRegistrationHandler
   implements ICommandHandler<ConfirmRegistrationCommand>
@@ -17,8 +15,7 @@ export class ConfirmRegistrationHandler
     private readonly redisService: RedisService,
     @InjectRepository(User)
     private usersRepository: Repository<User>,
-    @InjectPinoLogger('AUTH_SERVICE.ConfirmRegistrationHandler')
-    private readonly logger: PinoLogger,
+    private readonly logger: LokiLoggerService,
   ) {}
 
   async execute(command: ConfirmRegistrationCommand) {
@@ -26,9 +23,10 @@ export class ConfirmRegistrationHandler
     this.logger.info(`Confirming registration for user ${email}`);
     const dataRaw = await this.redisService.get(`registration:${email}`);
 
+    this.logger.info(`Data raw: ${dataRaw}`);
     if (!dataRaw) {
-      this.logger.error(`Code expired or invalid for user ${email}`);
-      throw new Error('Code expired or invalid');
+      this.logger.error(`No data for user ${email}`);
+      throw new RpcException('No data for user');
     }
     const data = JSON.parse(dataRaw) as {
       email: string;
@@ -37,11 +35,12 @@ export class ConfirmRegistrationHandler
     };
     if (data.email !== email) {
       this.logger.error(`Email expired or invalid for user ${email}`);
-      throw new Error('Email expired or invalid');
+      throw new RpcException('Email expired or invalid');
     }
+    console.log('data.code', data.code, code);
     if (data.code !== code) {
       this.logger.error(`Code expired or invalid for user ${email}`);
-      throw new Error('Code expired or invalid');
+      throw new RpcException('Code expired or invalid');
     }
 
     // Создаем пользователя в БД

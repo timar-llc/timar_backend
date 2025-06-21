@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@djeka07/nestjs-loki-logger": "^1.2.0",
     "@nestjs-plugins/nestjs-nats-jetstream-transport": "^2.2.6",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.0.1",
@@ -45,6 +46,7 @@
     "passport-jwt": "^4.0.1",
     "pg": "^8.16.1",
     "pino-http": "^10.5.0",
+    "pino-loki": "^2.6.0",
     "pino-pretty": "7.0.0",
     "pino-socket": "^7.4.0",
     "reflect-metadata": "^0.2.2",

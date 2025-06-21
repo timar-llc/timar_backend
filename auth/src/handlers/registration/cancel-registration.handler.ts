@@ -1,19 +1,15 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Injectable } from '@nestjs/common';
 import { CancelRegistrationCommand } from 'src/commands/registration/cancel-registration.command';
 import { RedisService } from '../../redis/redis.service';
-import { PinoLogger } from 'nestjs-pino';
-import { InjectPinoLogger } from 'nestjs-pino';
+import { LokiLoggerService } from '@djeka07/nestjs-loki-logger';
 
-@Injectable()
 @CommandHandler(CancelRegistrationCommand)
 export class CancelRegistrationHandler
   implements ICommandHandler<CancelRegistrationCommand>
 {
   constructor(
     private readonly redisService: RedisService,
-    @InjectPinoLogger('AUTH_SERVICE.CancelRegistrationHandler')
-    private readonly logger: PinoLogger,
+    private readonly logger: LokiLoggerService,
   ) {}
 
   async execute(command: CancelRegistrationCommand) {

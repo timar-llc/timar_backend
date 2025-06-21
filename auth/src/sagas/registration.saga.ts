@@ -1,12 +1,12 @@
-// src/auth/sagas/registration.saga.ts
 import { Injectable } from '@nestjs/common';
 import { Saga, ofType, ICommand } from '@nestjs/cqrs';
-import { Observable, map, filter, switchMap, takeUntil, timer } from 'rxjs';
+import { Observable, map, filter, switchMap, race, timer } from 'rxjs';
 import {
   ConfirmationCodeSentEvent,
   RegistrationConfirmedEvent,
   RegistrationFailedEvent,
 } from '../events/registration';
+
 import { CancelRegistrationCommand } from 'src/commands/registration/cancel-registration.command';
 import { ConfirmRegistrationCommand } from 'src/commands/registration/confirm-registration.command';
 
@@ -14,27 +14,32 @@ import { ConfirmRegistrationCommand } from 'src/commands/registration/confirm-re
 export class RegistrationSaga {
   @Saga()
   registration = (events$: Observable<any>): Observable<ICommand> => {
-    console.log('saga', events$);
     return events$.pipe(
-      ofType(ConfirmationCodeSentEvent),
-      switchMap((event) =>
-        // Ждем подтверждения или таймаута, к примеру 1 минута
-        events$.pipe(
+      ofType(ConfirmationCodeSentEvent), // 1. Начало регистрации
+      switchMap((event) => {
+        const { email } = event;
+
+        // 2. Поток подтверждения или ошибки
+        const confirmationOrFailure$ = events$.pipe(
           ofType(RegistrationConfirmedEvent, RegistrationFailedEvent),
-          filter((e) => e.email === event.email),
-          takeUntil(timer(60000)), // отмена если нет подтверждения 1 минута
+          filter((e) => e.email === email),
           map((e) => {
-            console.log('saga', e);
             if (e instanceof RegistrationConfirmedEvent) {
-              // Пользователь подтвердил - можно сохранять в БД
               return new ConfirmRegistrationCommand(e.email, e.code);
             } else {
-              // Пользователь не подтвердил - откат
               return new CancelRegistrationCommand(e.email);
             }
           }),
-        ),
-      ),
+        );
+
+        // 3. Поток тайм-аута — 1 минута
+        const timeout$ = timer(60000).pipe(
+          map(() => new CancelRegistrationCommand(email)),
+        );
+
+        // 4. Срабатывает первый из двух потоков
+        return race(confirmationOrFailure$, timeout$);
+      }),
     );
   };
 }

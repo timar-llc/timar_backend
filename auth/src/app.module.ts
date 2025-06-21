@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { LoggerModule } from 'nestjs-pino';
 import { ConfigModule } from '@nestjs/config';
 import { ConfigService } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
@@ -8,9 +7,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { User } from './entities/user.entity';
 import { RedisModule } from './redis/redis.module';
-import { RegistrationSaga } from './sagas/registration.saga';
-import { CommandHandlers } from './commands/registration';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { LokiLoggerModule } from '@djeka07/nestjs-loki-logger';
+import { RegistrationCommandHandlers } from './handlers/registration';
+import { ResetPasswordCommandHandlers } from './handlers/reset-password';
+import { SetNewPasswordHandler } from './handlers/set-new-password/set-new-password.handler';
+import { LoginHandlers } from './handlers/login';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -18,6 +21,14 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+    }),
+    JwtModule.registerAsync({
+      global: true,
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get('JWT_ACCESS_SECRET'),
+        signOptions: { expiresIn: '15m' },
+      }),
+      inject: [ConfigService],
     }),
     ClientsModule.registerAsync([
       {
@@ -49,40 +60,32 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
       synchronize: true, // в проде отключить!
     }),
     TypeOrmModule.forFeature([User]),
-    LoggerModule.forRootAsync({
+    LokiLoggerModule.forRootAsync({
       useFactory: (configService: ConfigService) => {
-        const nodeEnv = configService.get('NODE_ENV') as string;
+        return {
+          app: 'AUTH_SERVICE',
+          host: `http://${configService.get('LOGGER_HOST')}:${configService.get('LOGGER_PORT') as string}`,
+          userId: configService.get('LOGGER_USERNAME') as string,
+          password: configService.get('LOGGER_PASSWORD') as string,
 
-        if (nodeEnv === 'dev') {
-          return {
-            pinoHttp: {
-              transport: { target: 'pino-pretty' },
-              level: 'debug',
-            },
-          };
-        } else {
-          return {
-            pinoHttp: {
-              transport: {
-                target: 'pino-socket',
-                options: {
-                  address: configService.get('LOGGER_HOST') as string,
-                  port: configService.get('LOGGER_PORT') as number,
-                  mode: 'tcp',
-                  reconnect: true,
-                  recovery: true,
-                },
-              },
-              level: 'info',
-            },
-          };
-        }
+          environment:
+            configService.get('NODE_ENV') === 'dev'
+              ? 'development'
+              : 'production',
+          logDev: true,
+        };
       },
       inject: [ConfigService],
     }),
+
     RedisModule,
   ],
   controllers: [AppController],
-  providers: [RegistrationSaga, ...CommandHandlers],
+  providers: [
+    ...RegistrationCommandHandlers,
+    ...ResetPasswordCommandHandlers,
+    ...LoginHandlers,
+    SetNewPasswordHandler,
+  ],
 })
 export class AppModule {}

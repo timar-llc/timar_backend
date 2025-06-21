@@ -2,8 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions } from '@nestjs/microservices';
 import { Transport } from '@nestjs/microservices';
-import { Logger } from 'nestjs-pino';
 import { ValidationPipe } from '@nestjs/common';
+import { LokiLoggerService } from '@djeka07/nestjs-loki-logger';
 
 async function bootstrap() {
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
@@ -19,7 +19,7 @@ async function bootstrap() {
       },
     },
   );
-  app.useLogger(app.get(Logger));
+  app.useLogger(app.get(LokiLoggerService));
   app.useGlobalPipes(new ValidationPipe());
   await app.listen();
 }

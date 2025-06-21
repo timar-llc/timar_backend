@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { LoggerModule } from 'nestjs-pino';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MailerService } from './mailer/mailer.service';
+import { LokiLoggerModule } from '@djeka07/nestjs-loki-logger';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -12,34 +12,20 @@ import { MailerService } from './mailer/mailer.service';
       envFilePath: '.env',
     }),
     CqrsModule.forRoot(),
-    LoggerModule.forRootAsync({
+    LokiLoggerModule.forRootAsync({
       useFactory: (configService: ConfigService) => {
-        const nodeEnv = configService.get('NODE_ENV') as string;
+        return {
+          app: 'NOTIFICATION_SERVICE',
+          host: `http://${configService.get('LOGGER_HOST')}:${configService.get('LOGGER_PORT') as string}`,
+          userId: configService.get('LOGGER_USERNAME') as string,
+          password: configService.get('LOGGER_PASSWORD') as string,
 
-        if (nodeEnv === 'dev') {
-          return {
-            pinoHttp: {
-              transport: { target: 'pino-pretty' },
-              level: 'debug',
-            },
-          };
-        } else {
-          return {
-            pinoHttp: {
-              transport: {
-                target: 'pino-socket',
-                options: {
-                  address: configService.get('LOGGER_HOST') as string,
-                  port: configService.get('LOGGER_PORT') as number,
-                  mode: 'tcp',
-                  reconnect: true,
-                  recovery: true,
-                },
-              },
-              level: 'info',
-            },
-          };
-        }
+          environment:
+            configService.get('NODE_ENV') === 'dev'
+              ? 'development'
+              : 'production',
+          logDev: false,
+        };
       },
       inject: [ConfigService],
     }),

@@ -2,8 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
-import { Logger } from 'nestjs-pino';
 import metadata from 'src/metadata';
+import { LokiLoggerService } from '@djeka07/nestjs-loki-logger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -34,7 +34,7 @@ async function bootstrap() {
       forbidNonWhitelisted: false,
     }),
   );
-  app.useLogger(app.get(Logger));
+  app.useLogger(app.get(LokiLoggerService));
   await app.listen(process.env.PORT ?? 8000);
   console.log(
     `Gateway running at http://localhost:${process.env.PORT ?? 8000}/docs`,

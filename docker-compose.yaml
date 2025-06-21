@@ -40,6 +40,20 @@ services:
       - "15672:15672"
     networks:
       - main-network
+  loki:
+    image: grafana/loki
+    ports:
+      - "3100:3100"
+    networks:
+      - main-network
+  grafana:
+    volumes:
+      - grafana_storage:/var/lib/grafana
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - main-network
 
 networks:
   main-network:
@@ -48,3 +62,4 @@ networks:
 
 volumes:
   esdata:
+  grafana_storage:

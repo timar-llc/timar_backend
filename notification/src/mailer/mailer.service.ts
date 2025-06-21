@@ -25,4 +25,13 @@ export class MailerService {
     };
     await this.transporter.sendMail(message);
   }
+  async sendResetPasswordEmail(email: string, code: string) {
+    const message = {
+      from: `"No Reply" <${this.configService.get('SMTP_USER')}>`,
+      to: email,
+      subject: 'Your reset password code in Timar',
+      text: `Your reset password code is: ${code}`,
+    };
+    await this.transporter.sendMail(message);
+  }
 }
