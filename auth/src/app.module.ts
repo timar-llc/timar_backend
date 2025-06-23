@@ -46,6 +46,21 @@ import { JwtModule } from '@nestjs/jwt';
         }),
         inject: [ConfigService],
       },
+      {
+        name: 'PROFILE_SERVICE',
+        imports: [ConfigModule],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [configService.get('RABBITMQ_SERVER') as string],
+            queue: 'profile-service',
+            queueOptions: {
+              durable: false,
+            },
+          },
+        }),
+        inject: [ConfigService],
+      },
     ]),
 
     CacheModule.register(),

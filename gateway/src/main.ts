@@ -13,6 +13,14 @@ async function bootstrap() {
     .setTitle('API Gateway')
     .setDescription('Gateway TIMAR BACKEND')
     .setVersion('0.0.1')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+      'Bearer',
+    )
     .build();
   await SwaggerModule.loadPluginMetadata(metadata);
   const doc = SwaggerModule.createDocument(app, config);

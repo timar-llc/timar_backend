@@ -5,8 +5,6 @@ services:
       dockerfile: Dockerfile
     env_file:
       - .env.build
-    ports:
-      - '${PORT}:${PORT}'
     networks:
       - app-network
       - main-network
@@ -21,7 +19,7 @@ services:
       - .env.build
     environment:
       - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}
     ports:
       - '5432:5432'
@@ -67,3 +65,7 @@ networks:
     driver: bridge
   main-network:
     external: true
+
+volumes:
+  pgdata:
+  pgadmin-data:

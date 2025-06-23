@@ -4,10 +4,15 @@ import {
   Controller,
   Inject,
   Post,
+  Query,
 } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { ClientProxy } from '@nestjs/microservices';
-import { ConfirmDto } from './dto/confirm-code.dto';
+import {
+  ConfirmCodeType,
+  ConfirmCodeTypeEnum,
+  ConfirmDto,
+} from './dto/confirm-code.dto';
 import { firstValueFrom } from 'rxjs';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { LoginDto, LoginResponseDto, RefreshDto } from './dto/login.dto';
@@ -64,18 +69,35 @@ export class AuthController {
     }
   }
 
-  @Post('confirm-registration')
-  async confirm(@Body() body: ConfirmDto): Promise<CommandResponseDto> {
-    try {
-      const result = await firstValueFrom(
-        this.client.send('auth-service.confirm', body),
-      );
-      this.logger.log('Confirmation successful');
-      return { message: 'Confirmation successful', result };
-    } catch (error) {
-      this.logger.error('Confirmation failed', error);
-      throw new BadRequestException(error);
+  @Post('confirm')
+  async confirm(
+    @Body() body: ConfirmDto,
+    @Query() type: ConfirmCodeType,
+  ): Promise<CommandResponseDto> {
+    if (type.type === ConfirmCodeTypeEnum.REGISTER) {
+      try {
+        const result = await firstValueFrom(
+          this.client.send('auth-service.confirm', body),
+        );
+        this.logger.log('Confirmation successful');
+        return { message: 'Confirmation successful', result };
+      } catch (error) {
+        this.logger.error('Confirmation failed', error);
+        throw new BadRequestException(error);
+      }
+    } else if (type.type === ConfirmCodeTypeEnum.RESET_PASSWORD) {
+      try {
+        const result = await firstValueFrom(
+          this.client.send('auth-service.confirm-reset-password', body),
+        );
+        this.logger.log('Confirmation successful');
+        return { message: 'Confirmation successful', result };
+      } catch (error) {
+        this.logger.error('Confirmation failed', error);
+        throw new BadRequestException(error);
+      }
     }
+    throw new BadRequestException('Invalid code type');
   }
 
   @Post('reset-password')
@@ -90,22 +112,6 @@ export class AuthController {
       return { message: 'Reset password successful', result };
     } catch (error) {
       this.logger.error('Reset password failed', error);
-      throw new BadRequestException(error);
-    }
-  }
-
-  @Post('confirm-reset-password')
-  async confirmResetPassword(
-    @Body() body: ConfirmDto,
-  ): Promise<CommandResponseDto> {
-    try {
-      const result = await firstValueFrom(
-        this.client.send('auth-service.confirm-reset-password', body),
-      );
-      this.logger.log('Reset password confirmation successful');
-      return { message: 'Reset password confirmation successful', result };
-    } catch (error) {
-      this.logger.error('Reset password confirmation failed', error);
       throw new BadRequestException(error);
     }
   }

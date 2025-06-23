@@ -20,6 +20,9 @@ export class User {
   @Column({ name: 'verification_code', nullable: true })
   verificationCode: string;
 
+  @Column({ name: 'email_confirmed', default: false })
+  emailConfirmed: boolean;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

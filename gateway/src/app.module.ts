@@ -4,6 +4,8 @@ import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LokiLoggerModule } from '@djeka07/nestjs-loki-logger';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { GeolocationModule } from './modules/geolocation/geolocation.module';
 
 @Module({
   imports: [
@@ -26,6 +28,26 @@ import { LokiLoggerModule } from '@djeka07/nestjs-loki-logger';
       inject: [ConfigService],
     }),
     AuthModule,
+    GeolocationModule,
+    ClientsModule.registerAsync([
+      {
+        name: 'AUTH_SERVICE',
+        imports: [ConfigModule],
+        useFactory: (configService: ConfigService) => {
+          return {
+            transport: Transport.RMQ,
+            options: {
+              urls: [configService.get('RABBITMQ_SERVER') as string],
+              queue: 'auth-service',
+              queueOptions: {
+                durable: false,
+              },
+            },
+          };
+        },
+        inject: [ConfigService],
+      },
+    ]),
   ],
   controllers: [AppController],
   providers: [AppService],

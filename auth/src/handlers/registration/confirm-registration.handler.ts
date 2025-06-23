@@ -4,8 +4,9 @@ import { RedisService } from '../../redis/redis.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../../entities/user.entity';
 import { Repository } from 'typeorm';
-import { RpcException } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { LokiLoggerService } from '@djeka07/nestjs-loki-logger';
+import { Inject } from '@nestjs/common';
 
 @CommandHandler(ConfirmRegistrationCommand)
 export class ConfirmRegistrationHandler
@@ -16,6 +17,7 @@ export class ConfirmRegistrationHandler
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private readonly logger: LokiLoggerService,
+    @Inject('PROFILE_SERVICE') private readonly client: ClientProxy,
   ) {}
 
   async execute(command: ConfirmRegistrationCommand) {
@@ -44,16 +46,22 @@ export class ConfirmRegistrationHandler
     }
 
     // Создаем пользователя в БД
-    const user = this.usersRepository.create({
+    let user = this.usersRepository.create({
       email: data.email,
       passwordHash: data.passwordHash,
       verificationCode: data.code,
     });
-    await this.usersRepository.save(user);
+    user = await this.usersRepository.save(user);
     this.logger.info(`User ${email} confirmed successfully`);
 
     // Удаляем из Redis
     await this.redisService.del(`registration:${email}`);
     this.logger.info(`User ${email} deleted from Redis`);
+
+    this.client.emit('auth.user.created', {
+      userUuid: user.uuid,
+    });
+
+    // this.eventBus.publish(new RegistrationConfirmedEvent(email, code));
   }
 }

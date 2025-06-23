@@ -65,10 +65,7 @@ export class RegisterHandler implements ICommandHandler<RegisterCommand> {
     this.logger.info('Registration code saved in Redis');
 
     return { success: true, message: 'Registration initiated' };
-    // Публикуем событие — код подтверждения успешно отправлен
 
-    // this.eventBus.publish(
-    //   new ConfirmationCodeSentEvent(email, confirmationCode),
-    // );
+    // Публикуем событие — код подтверждения успешно отправлен
   }
 }

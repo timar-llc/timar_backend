@@ -17,12 +17,14 @@ import {
   ResetPasswordCommand,
 } from './commands';
 import { SetNewPasswordCommand } from './commands/set-new-password/set-new-password.command';
+import { JwtService } from '@nestjs/jwt';
 
 @Controller()
 export class AppController implements OnApplicationBootstrap {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly logger: LokiLoggerService,
+    private readonly jwtService: JwtService,
   ) {}
 
   onApplicationBootstrap() {
@@ -118,6 +120,20 @@ export class AppController implements OnApplicationBootstrap {
     } catch (error: any) {
       this.logger.error('New password setting failed', error);
       throw new RpcException(error.message as Error);
+    }
+  }
+  @MessagePattern('auth-service.verify')
+  async verify(@Payload() data: { token: string }) {
+    try {
+      const payload = await this.jwtService.verify(data.token); // если невалиден — будет исключение
+      return {
+        id: payload.sub,
+        email: payload.email,
+        role: payload.role,
+      };
+    } catch (error) {
+      this.logger.error('Invalid token', error);
+      throw new RpcException('Invalid token');
     }
   }
 }
