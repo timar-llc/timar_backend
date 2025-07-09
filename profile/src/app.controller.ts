@@ -1,5 +1,4 @@
 import { Controller } from '@nestjs/common';
-import { AppService } from './app.service';
 import { EventPattern, Payload } from '@nestjs/microservices';
 import { LokiLoggerService } from '@djeka07/nestjs-loki-logger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -9,7 +8,6 @@ import { CreateProfileCommand } from './commands/create-profile.command';
 @Controller()
 export class AppController {
   constructor(
-    private readonly appService: AppService,
     private readonly logger: LokiLoggerService,
     private readonly commandBus: CommandBus,
   ) {}

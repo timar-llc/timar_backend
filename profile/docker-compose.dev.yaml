@@ -44,7 +44,7 @@ services:
 
 networks:
   app-network:
-    name: notification_service_app-network
+    name: profile_service_app-network
     driver: bridge
   main-network:
     external: true

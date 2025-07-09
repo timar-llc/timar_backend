@@ -8,6 +8,7 @@ import { countries, countryTranslations } from './seed/countries.seed';
 import { Country } from './entities/country.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { CacheTTL } from '@nestjs/cache-manager';
 
 @Controller()
 export class AppController implements OnModuleInit {
@@ -33,6 +34,7 @@ export class AppController implements OnModuleInit {
   }
 
   @MessagePattern('geolocation.get_countries')
+  @CacheTTL(60 * 60 * 24)
   async getCountries(): Promise<Country[]> {
     try {
       this.logger.info('Getting countries');

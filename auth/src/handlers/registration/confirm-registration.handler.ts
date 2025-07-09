@@ -61,7 +61,5 @@ export class ConfirmRegistrationHandler
     this.client.emit('auth.user.created', {
       userUuid: user.uuid,
     });
-
-    // this.eventBus.publish(new RegistrationConfirmedEvent(email, code));
   }
 }

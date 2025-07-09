@@ -1,4 +1,4 @@
-import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { RedisService } from '../../redis/redis.service';
@@ -14,7 +14,6 @@ import { firstValueFrom } from 'rxjs';
 export class RegisterHandler implements ICommandHandler<RegisterCommand> {
   constructor(
     private readonly redisService: RedisService,
-    private readonly eventBus: EventBus,
     @Inject('NOTIFICATION_SERVICE') private readonly client: ClientProxy,
     private readonly logger: LokiLoggerService,
     @InjectRepository(User)

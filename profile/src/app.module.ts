@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { LokiLoggerModule } from '@djeka07/nestjs-loki-logger';
@@ -44,6 +43,6 @@ import { CreateProfileHandler } from './handlers/create-profile.handler';
     }),
   ],
   controllers: [AppController],
-  providers: [AppService, CreateProfileHandler],
+  providers: [CreateProfileHandler],
 })
 export class AppModule {}
