@@ -1,11 +1,9 @@
-import { Controller, Get, Inject, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Inject, Headers } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { LokiLoggerService } from '@djeka07/nestjs-loki-logger';
 import { firstValueFrom } from 'rxjs';
-import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('geolocation')
-@UseInterceptors(CacheInterceptor)
 export class GeolocationController {
   constructor(
     @Inject('GEOLOCATION_SERVICE') private readonly client: ClientProxy,
@@ -13,11 +11,15 @@ export class GeolocationController {
   ) {}
 
   @Get('countries')
-  async getCountries(): Promise<any> {
+  async getCountries(
+    @Headers('accept-language') acceptLanguage?: string,
+  ): Promise<any> {
+    const lang = acceptLanguage || 'en';
+    console.log('Language:', lang);
     try {
       this.logger.info('Getting countries');
       return await firstValueFrom(
-        this.client.send('geolocation.get_countries', {}),
+        this.client.send('geolocation.get_countries', { lang }),
       );
     } catch (error) {
       this.logger.error('Error getting countries', error);

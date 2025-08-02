@@ -72,7 +72,7 @@ import { JwtModule } from '@nestjs/jwt';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       entities: [User],
-      synchronize: true, // в проде отключить!
+      synchronize: process.env.NODE_ENV === 'dev' ? true : false,
     }),
     TypeOrmModule.forFeature([User]),
     LokiLoggerModule.forRootAsync({

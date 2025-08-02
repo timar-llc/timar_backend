@@ -5,6 +5,8 @@
 */build
 .vscode
 
+helm
+kub.yaml
 # Logs
 logs
 *.log
