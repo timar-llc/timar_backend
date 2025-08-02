@@ -6,8 +6,7 @@ export class Country {
   uuid: string;
 
   @Column()
-  name: string;
-
-  @Column()
   code: string;
+
+  name: string;
 }

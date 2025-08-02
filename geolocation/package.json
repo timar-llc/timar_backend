@@ -36,6 +36,7 @@
     "class-validator": "^0.14.2",
     "jetstream-nestjs": "^1.0.11",
     "nats": "^2.29.3",
+    "nestjs-i18n": "^10.5.1",
     "nestjs-pino": "^4.4.0",
     "nodemailer": "^7.0.3",
     "pg": "^8.16.2",

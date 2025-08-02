@@ -1,14 +1,15 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern, RpcException } from '@nestjs/microservices';
+import { MessagePattern, Payload, RpcException } from '@nestjs/microservices';
 import { LokiLoggerService } from '@djeka07/nestjs-loki-logger';
 import { QueryBus } from '@nestjs/cqrs';
 import { GetCountriesQuery } from './queries/get-countries.query';
 import { OnModuleInit } from '@nestjs/common';
-import { countries, countryTranslations } from './seed/countries.seed';
+import { countries } from './seed/countries.seed';
 import { Country } from './entities/country.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CacheTTL } from '@nestjs/cache-manager';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
+import { Inject } from '@nestjs/common';
 
 @Controller()
 export class AppController implements OnModuleInit {
@@ -17,6 +18,7 @@ export class AppController implements OnModuleInit {
     private readonly queryBus: QueryBus,
     @InjectRepository(Country)
     private readonly countryRepository: Repository<Country>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async onModuleInit() {
@@ -24,7 +26,6 @@ export class AppController implements OnModuleInit {
       this.logger.info('Seeding countries');
       const countriesList = countries.map((country) => {
         return this.countryRepository.create({
-          name: countryTranslations[country.name] || country.name,
           code: country.code,
         });
       });
@@ -34,11 +35,24 @@ export class AppController implements OnModuleInit {
   }
 
   @MessagePattern('geolocation.get_countries')
-  @CacheTTL(60 * 60 * 24)
-  async getCountries(): Promise<Country[]> {
+  async getCountries(@Payload('lang') lang: string): Promise<Country[]> {
     try {
       this.logger.info('Getting countries');
-      return await this.queryBus.execute(new GetCountriesQuery());
+      const cacheKey = `countries:${lang}`;
+
+      const cached = await this.cacheManager.get(cacheKey);
+      if (cached) {
+        this.logger.info('Returning cached countries');
+        return cached as Country[];
+      }
+
+      const countries = await this.queryBus.execute(
+        new GetCountriesQuery(lang),
+      );
+
+      await this.cacheManager.set(cacheKey, countries, 60 * 60 * 24);
+
+      return countries as Country[];
     } catch (error) {
       this.logger.error('Error getting countries', error);
       throw new RpcException(error.message as Error);

@@ -7,11 +7,29 @@ import { LokiLoggerModule } from '@djeka07/nestjs-loki-logger';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Country } from './entities/country.entity';
 import { GetCountriesHandler } from './handlers/get-countries.handler';
+import {
+  AcceptLanguageResolver,
+  HeaderResolver,
+  I18nModule,
+} from 'nestjs-i18n';
+import * as path from 'path';
+import { CacheModule } from '@nestjs/cache-manager';
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+    }),
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      loaderOptions: {
+        path: path.join(__dirname, '../src/i18n/'),
+        watch: true,
+      },
+      resolvers: [
+        new HeaderResolver(['accept-language']),
+        AcceptLanguageResolver,
+      ],
     }),
     CqrsModule.forRoot(),
     TypeOrmModule.forRoot({
@@ -42,6 +60,7 @@ import { GetCountriesHandler } from './handlers/get-countries.handler';
       },
       inject: [ConfigService],
     }),
+    CacheModule.register(),
   ],
   controllers: [AppController],
   providers: [AppService, GetCountriesHandler],
