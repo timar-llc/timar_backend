@@ -1,15 +1,13 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity({ name: 'countries' })
-export class Country {
+@Entity({ name: 'user_technologies' })
+export class UserTechnology {
   @PrimaryGeneratedColumn('uuid')
   uuid: string;
 
   @Column()
-  code: string;
+  technologyUuid: string;
 
   @Column()
-  slug: string;
-
-  name: string;
+  userUuid: string;
 }

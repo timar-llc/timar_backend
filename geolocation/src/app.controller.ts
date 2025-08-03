@@ -27,6 +27,7 @@ export class AppController implements OnModuleInit {
       const countriesList = countries.map((country) => {
         return this.countryRepository.create({
           code: country.code,
+          slug: country.code.toLowerCase(),
         });
       });
       await this.countryRepository.save(countriesList);

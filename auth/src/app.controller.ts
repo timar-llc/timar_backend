@@ -127,7 +127,7 @@ export class AppController implements OnApplicationBootstrap {
     try {
       const payload = await this.jwtService.verify(data.token); // если невалиден — будет исключение
       return {
-        id: payload.sub,
+        uuid: payload.sub,
         email: payload.email,
         role: payload.role,
       };

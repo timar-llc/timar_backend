@@ -23,6 +23,15 @@ export class Profile {
   @Column({ name: 'avatar_url', nullable: true })
   avatarUrl: string;
 
+  @Column({ name: 'specialization', nullable: true })
+  specialization: string;
+
+  @Column({ name: 'cv', nullable: true })
+  cv: string;
+
+  @Column({ name: 'profile_completeness', nullable: true })
+  profileCompleteness: number;
+
   @Column({ name: 'phone_number', nullable: true })
   phoneNumber: string;
 

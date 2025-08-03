@@ -1,18 +1,41 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
+import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { LokiLoggerModule } from '@djeka07/nestjs-loki-logger';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Profile } from './entities/profile.entity';
-import { CreateProfileHandler } from './handlers/create-profile.handler';
-import { EditBasicInfoHandler } from './handlers/edit-basic-info.handler';
-import { GetMeHandler } from './handlers/get-me.handler';
+import { GetTechnologiesHandler } from './handlers/get-technologies.handler';
+import {
+  AcceptLanguageResolver,
+  HeaderResolver,
+  I18nModule,
+} from 'nestjs-i18n';
+import * as path from 'path';
+import { CacheModule } from '@nestjs/cache-manager';
+import { Technology } from './entities/technology.entity';
+import { GetUserTechnologiesHandler } from './handlers/get-user-technologies.handler';
+import { GetTechnologyHandler } from './handlers/get-technology.handler';
+import { AddUserTechnologyHandler } from './handlers/add-user-technology.handler';
+import { RemoveUserTechnologyHandler } from './handlers/remove-user-technology.handler';
+import { UserTechnology } from './entities/userTechnology.entity';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+    }),
+    I18nModule.forRoot({
+      fallbackLanguage: 'en',
+      loaderOptions: {
+        path: path.join(__dirname, '../src/i18n/'),
+        watch: true,
+      },
+      resolvers: [
+        new HeaderResolver(['accept-language']),
+        AcceptLanguageResolver,
+      ],
     }),
     CqrsModule.forRoot(),
     TypeOrmModule.forRoot({
@@ -22,14 +45,14 @@ import { GetMeHandler } from './handlers/get-me.handler';
       username: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
+      entities: [Technology, UserTechnology],
       synchronize: true, // в проде отключить!
-      entities: [Profile],
     }),
-    TypeOrmModule.forFeature([Profile]),
+    TypeOrmModule.forFeature([Technology, UserTechnology]),
     LokiLoggerModule.forRootAsync({
       useFactory: (configService: ConfigService) => {
         return {
-          app: 'PROFILE_SERVICE',
+          app: 'TECHNOLOGY_SERVICE',
           host: `http://${configService.get('LOGGER_HOST')}:${configService.get('LOGGER_PORT') as string}`,
           userId: configService.get('LOGGER_USERNAME') as string,
           password: configService.get('LOGGER_PASSWORD') as string,
@@ -43,8 +66,16 @@ import { GetMeHandler } from './handlers/get-me.handler';
       },
       inject: [ConfigService],
     }),
+    CacheModule.register(),
   ],
   controllers: [AppController],
-  providers: [CreateProfileHandler, EditBasicInfoHandler, GetMeHandler],
+  providers: [
+    AppService,
+    GetTechnologiesHandler,
+    GetUserTechnologiesHandler,
+    GetTechnologyHandler,
+    AddUserTechnologyHandler,
+    RemoveUserTechnologyHandler,
+  ],
 })
 export class AppModule {}
