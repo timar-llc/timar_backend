@@ -1,13 +1,30 @@
 services:
+  s3:
+    image: minio/minio
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    networks:
+      - main-network
+    volumes:
+      - s3-data:/data
+    env_file:
+      - .env.build
+    environment:
+      MINIO_ROOT_USER: ${DB_USER}
+      MINIO_ROOT_PASSWORD: ${DB_PASSWORD}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+    command: server --console-address ':9001' /data
   postgres:
     container_name: auth_service_postgres
     image: postgres:latest
     env_file:
       - .env.build
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
     ports:
       - '5432:5432'
     networks:
@@ -32,7 +49,7 @@ services:
       - '.env.build'
     environment:
       PGADMIN_DEFAULT_EMAIL: 'timar@timar.com'
-      PGADMIN_DEFAULT_PASSWORD: ${POSTGRES_PASSWORD}
+      PGADMIN_DEFAULT_PASSWORD: ${DB_PASSWORD}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     volumes:
       - pgadmin-data:/var/lib/pgadmin
@@ -50,6 +67,7 @@ services:
 volumes:
   pgdata:
   pgadmin-data:
+  s3-data:
 
 networks:
   app-network:

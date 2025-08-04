@@ -5,17 +5,20 @@ import {
   Get,
   Inject,
   Post,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { LokiLoggerService } from '@djeka07/nestjs-loki-logger';
 import { firstValueFrom } from 'rxjs';
 import { EditBasicInfoDto } from './dto/edit-basic-info.dto';
 import { AuthGuard } from '../auth/guards/auth.guard';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { RemoveTechnologyDto } from './dto/remove-user-technology.dto';
 import { AddTechnologyDto } from './dto/add-user-technology.dto';
 import { CurrentUser } from '../common/decorators/user.decorator';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('profile')
 export class ProfileController {
@@ -60,6 +63,47 @@ export class ProfileController {
       this.logger.error(`Error editing basic info for ${userUuid}`, error);
       throw new RpcException(error.message as Error);
     }
+  }
+
+  @Post('edit-avatar')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth('Bearer')
+  @UseInterceptors(FileInterceptor('avatar'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        avatar: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  async editAvatar(
+    @CurrentUser() userUuid: string,
+    @UploadedFile()
+    avatar: Express.Multer.File,
+  ) {
+    console.log('Avatar buffer type:', typeof avatar.buffer);
+    console.log('Avatar buffer constructor:', avatar.buffer.constructor.name);
+    console.log('Avatar buffer is Buffer:', Buffer.isBuffer(avatar.buffer));
+
+    // Преобразуем buffer в base64 для передачи через микросервис
+    const fileData = {
+      fieldname: avatar.fieldname,
+      originalname: avatar.originalname,
+      encoding: avatar.encoding,
+      mimetype: avatar.mimetype,
+      buffer: avatar.buffer.toString('base64'), // Передаем как base64 строку
+      size: avatar.size,
+    };
+
+    return await firstValueFrom(
+      this.profileClient.send('profile.edit_avatar', {
+        userUuid,
+        avatar:
+          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkNTQ1ZGE3OC04',
+      }),
+    );
   }
 
   @Get('technologies')

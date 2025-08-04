@@ -8,6 +8,8 @@ import { Profile } from './entities/profile.entity';
 import { CreateProfileHandler } from './handlers/create-profile.handler';
 import { EditBasicInfoHandler } from './handlers/edit-basic-info.handler';
 import { GetMeHandler } from './handlers/get-me.handler';
+import { StorageModule } from './config/s3/s3.module';
+import { EditAvatarHandler } from './handlers/edit-avatar.handler';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -26,6 +28,7 @@ import { GetMeHandler } from './handlers/get-me.handler';
       entities: [Profile],
     }),
     TypeOrmModule.forFeature([Profile]),
+    StorageModule,
     LokiLoggerModule.forRootAsync({
       useFactory: (configService: ConfigService) => {
         return {
@@ -45,6 +48,11 @@ import { GetMeHandler } from './handlers/get-me.handler';
     }),
   ],
   controllers: [AppController],
-  providers: [CreateProfileHandler, EditBasicInfoHandler, GetMeHandler],
+  providers: [
+    CreateProfileHandler,
+    EditBasicInfoHandler,
+    GetMeHandler,
+    EditAvatarHandler,
+  ],
 })
 export class AppModule {}

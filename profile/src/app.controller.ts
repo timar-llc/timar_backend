@@ -13,6 +13,8 @@ import { EditBasicInfoDto } from './dto/edit-basic-info.dto';
 import { EditBasicInfoCommand } from './commands/edit-basic-info.command';
 import { GetMeQuery } from './queries/get-me.query';
 import { Profile } from './entities/profile.entity';
+import { EditAvatarDto } from './dto/edit-avatar.dto';
+import { EditAvatarCommand } from './commands/edit-avatar.command';
 
 @Controller()
 export class AppController {
@@ -36,6 +38,18 @@ export class AppController {
       return await this.queryBus.execute(new GetMeQuery(userUuid));
     } catch (error) {
       this.logger.error(`Error getting me for ${userUuid}`, error);
+      throw new RpcException(error.message as Error);
+    }
+  }
+
+  @MessagePattern('profile.edit_avatar')
+  async editAvatar(@Payload() dto: EditAvatarDto) {
+    this.logger.info(`Editing avatar for ${dto.userUuid}`);
+    try {
+      await this.commandBus.execute(new EditAvatarCommand(dto));
+      return { success: true, message: 'Avatar edited' };
+    } catch (error) {
+      this.logger.error(`Error editing avatar for ${dto.userUuid}`, error);
       throw new RpcException(error.message as Error);
     }
   }
