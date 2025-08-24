@@ -14,7 +14,7 @@ import { ResetPasswordCommandHandlers } from './handlers/reset-password';
 import { SetNewPasswordHandler } from './handlers/set-new-password/set-new-password.handler';
 import { LoginHandlers } from './handlers/login';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfirmLoginHandler } from './commands/login/confirm-login.handler';
+import { TelegramAuthHandler } from './handlers/social-auth/telegram-auth.handler';
 
 @Module({
   imports: [
@@ -102,7 +102,7 @@ import { ConfirmLoginHandler } from './commands/login/confirm-login.handler';
     ...ResetPasswordCommandHandlers,
     ...LoginHandlers,
     SetNewPasswordHandler,
-    ConfirmLoginHandler,
+    TelegramAuthHandler,
   ],
 })
 export class AppModule {}

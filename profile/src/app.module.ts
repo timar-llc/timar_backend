@@ -10,6 +10,7 @@ import { EditBasicInfoHandler } from './handlers/edit-basic-info.handler';
 import { GetMeHandler } from './handlers/get-me.handler';
 import { StorageModule } from './config/s3/s3.module';
 import { EditAvatarHandler } from './handlers/edit-avatar.handler';
+import { SetAvatarHandler } from './handlers/set-avatar.handler';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -53,6 +54,7 @@ import { EditAvatarHandler } from './handlers/edit-avatar.handler';
     EditBasicInfoHandler,
     GetMeHandler,
     EditAvatarHandler,
+    SetAvatarHandler,
   ],
 })
 export class AppModule {}

@@ -15,6 +15,8 @@ import { GetMeQuery } from './queries/get-me.query';
 import { Profile } from './entities/profile.entity';
 import { EditAvatarDto } from './dto/edit-avatar.dto';
 import { EditAvatarCommand } from './commands/edit-avatar.command';
+import { SetAvatarDto } from './dto/set-avatar.dto';
+import { SetAvatarCommand } from './commands/set-avatar.command';
 
 @Controller()
 export class AppController {
@@ -29,6 +31,13 @@ export class AppController {
     this.logger.info(`Creating profile for ${dto.userUuid}`);
     await this.commandBus.execute(new CreateProfileCommand(dto.userUuid));
     return { success: true, message: 'Profile created' };
+  }
+
+  @MessagePattern('profile.user.set_avatar')
+  async setAvatar(@Payload() dto: SetAvatarDto) {
+    this.logger.info(`Setting avatar for ${dto.userUuid}`);
+    await this.commandBus.execute(new SetAvatarCommand(dto));
+    return { success: true, message: 'Avatar set' };
   }
 
   @MessagePattern('profile.get_me')

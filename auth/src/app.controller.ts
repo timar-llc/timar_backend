@@ -18,6 +18,8 @@ import {
 } from './commands';
 import { SetNewPasswordCommand } from './commands/set-new-password/set-new-password.command';
 import { JwtService } from '@nestjs/jwt';
+import { TelegramAuthDto } from './dto/telegram-auth.dto';
+import { TelegramAuthCommand } from './commands/social-auth/telegram-auth.command';
 
 @Controller()
 export class AppController implements OnApplicationBootstrap {
@@ -136,6 +138,18 @@ export class AppController implements OnApplicationBootstrap {
     } catch (error) {
       this.logger.error('Invalid token', error);
       throw new RpcException('Invalid token');
+    }
+  }
+  @MessagePattern('auth-service.telegram-auth')
+  async telegramAuth(@Payload() dto: TelegramAuthDto) {
+    try {
+      const result = await this.commandBus.execute(
+        new TelegramAuthCommand(dto),
+      );
+      return result as LoginResponseDto;
+    } catch (error: any) {
+      this.logger.error('Telegram auth failed', error);
+      throw new RpcException(error.message as Error);
     }
   }
 }
