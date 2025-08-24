@@ -1,13 +1,16 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LokiLoggerModule } from '@djeka07/nestjs-loki-logger';
-import { GeolocationModule } from './modules/geolocation/geolocation.module';
-import { TechnologyModule } from './modules/technology/technology.module';
-import { ProfileModule } from './modules/profile/profile.module';
 import { ClientsModule } from './modules/clients/clients.module';
+import {
+  AuthModule,
+  GeolocationModule,
+  ProfileModule,
+  ProjectModule,
+  TechnologyModule,
+} from './modules';
 
 @Module({
   imports: [
@@ -34,6 +37,7 @@ import { ClientsModule } from './modules/clients/clients.module';
     GeolocationModule,
     TechnologyModule,
     ProfileModule,
+    ProjectModule,
   ],
   controllers: [AppController],
   providers: [AppService],

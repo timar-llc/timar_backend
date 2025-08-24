@@ -19,6 +19,7 @@ import { RemoveTechnologyDto } from './dto/remove-user-technology.dto';
 import { AddTechnologyDto } from './dto/add-user-technology.dto';
 import { CurrentUser } from '../common/decorators/user.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ProfileDto } from './dto/profile.dto';
 
 @Controller('profile')
 export class ProfileController {
@@ -32,7 +33,7 @@ export class ProfileController {
   @Get()
   @UseGuards(AuthGuard)
   @ApiBearerAuth('Bearer')
-  async getProfile(@CurrentUser() userUuid: string) {
+  async getProfile(@CurrentUser() userUuid: string): Promise<ProfileDto> {
     try {
       this.logger.info(`Getting profile for ${userUuid}`);
       return await firstValueFrom(
@@ -83,25 +84,19 @@ export class ProfileController {
     @UploadedFile()
     avatar: Express.Multer.File,
   ) {
-    console.log('Avatar buffer type:', typeof avatar.buffer);
-    console.log('Avatar buffer constructor:', avatar.buffer.constructor.name);
-    console.log('Avatar buffer is Buffer:', Buffer.isBuffer(avatar.buffer));
-
-    // Преобразуем buffer в base64 для передачи через микросервис
     const fileData = {
       fieldname: avatar.fieldname,
       originalname: avatar.originalname,
       encoding: avatar.encoding,
       mimetype: avatar.mimetype,
-      buffer: avatar.buffer.toString('base64'), // Передаем как base64 строку
+      buffer: avatar.buffer.toString('base64'),
       size: avatar.size,
     };
 
     return await firstValueFrom(
       this.profileClient.send('profile.edit_avatar', {
         userUuid,
-        avatar:
-          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkNTQ1ZGE3OC04',
+        avatar: fileData,
       }),
     );
   }

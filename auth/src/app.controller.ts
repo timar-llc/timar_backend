@@ -36,7 +36,7 @@ export class AppController implements OnApplicationBootstrap {
   async login(@Payload() dto: LoginDto) {
     try {
       const result = await this.commandBus.execute(
-        new LoginCommand(dto.email, dto.password),
+        new LoginCommand(dto.phoneNumber, dto.email, dto.password),
       );
       return result as LoginResponseDto;
     } catch (error: any) {
@@ -88,7 +88,9 @@ export class AppController implements OnApplicationBootstrap {
   @MessagePattern('auth-service.reset-password')
   async resetPassword(@Payload() dto: ResetPasswordDto) {
     try {
-      await this.commandBus.execute(new ResetPasswordCommand(dto.email));
+      await this.commandBus.execute(
+        new ResetPasswordCommand(dto.email, dto.phoneNumber),
+      );
 
       return { success: true, message: 'Reset password initiated' };
     } catch (error: any) {
@@ -101,7 +103,7 @@ export class AppController implements OnApplicationBootstrap {
   async confirmResetPassword(@Payload() dto: ConfirmDto) {
     try {
       await this.commandBus.execute(
-        new ConfirmResetPasswordCommand(dto.email, dto.code),
+        new ConfirmResetPasswordCommand(dto.email, dto.code, dto.phoneNumber),
       );
       return { success: true, message: 'Reset password confirmed' };
     } catch (error: any) {
@@ -114,7 +116,7 @@ export class AppController implements OnApplicationBootstrap {
   async setNewPassword(@Payload() dto: SetNewPasswordDto) {
     try {
       await this.commandBus.execute(
-        new SetNewPasswordCommand(dto.email, dto.password),
+        new SetNewPasswordCommand(dto.email, dto.password, dto.phoneNumber),
       );
       return { success: true, message: 'New password set' };
     } catch (error: any) {

@@ -13,20 +13,29 @@ export class ConfirmResetPasswordHandler
     private readonly logger: LokiLoggerService,
   ) {}
   async execute(command: ConfirmResetPasswordCommand) {
-    const { email, code } = command;
+    const { email, phoneNumber, code } = command;
     this.logger.info(`Confirming reset password for user ${email}`);
-    const dataRaw = await this.redisService.get(`reset-password:${email}`);
+    const dataRaw = await this.redisService.get(
+      `reset-password:${email || phoneNumber}`,
+    );
     if (!dataRaw) {
       this.logger.error(`No data for user ${email}`);
       throw new RpcException('No data for user');
     }
     const data = JSON.parse(dataRaw) as {
       email: string;
+      phoneNumber: string;
       code: string;
     };
-    if (data.email !== email) {
+    if (email && data.email !== email) {
       this.logger.error(`Email expired or invalid for user ${email}`);
       throw new RpcException('Email expired or invalid');
+    }
+    if (phoneNumber && data.phoneNumber !== phoneNumber) {
+      this.logger.error(
+        `Phone number expired or invalid for user ${phoneNumber}`,
+      );
+      throw new RpcException('Phone number expired or invalid');
     }
     if (data.code !== code) {
       this.logger.error(`Code expired or invalid for user ${email}`);

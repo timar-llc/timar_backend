@@ -22,19 +22,26 @@ export class ResetPasswordHandler
     @Inject('NOTIFICATION_SERVICE') private readonly client: ClientProxy,
   ) {}
   async execute(command: ResetPasswordCommand) {
-    const { email } = command;
+    const { email, phoneNumber } = command;
+    let existingUser: User | null;
     this.logger.info(`Resetting password for user ${email}`);
     const existingUserInRedis = await this.redisService.get(
-      `reset-password:${email}`,
+      `reset-password:${email || phoneNumber}`,
     );
     if (existingUserInRedis) {
       throw new RpcException('User already has reset password');
     }
-    const existingUser = await this.usersRepository.findOne({
-      where: { email },
-    });
-    if (!existingUser) {
-      throw new RpcException('User not found');
+    if (phoneNumber) {
+      existingUser = await this.usersRepository.findOne({
+        where: { phoneNumber },
+      });
+      if (!existingUser) {
+        throw new RpcException('User not found');
+      }
+    } else {
+      existingUser = await this.usersRepository.findOne({
+        where: { email },
+      });
     }
     const confirmationCode = Math.floor(
       100000 + Math.random() * 900000,
@@ -46,7 +53,8 @@ export class ResetPasswordHandler
         this.client.send(
           'notification.reset-password.send_reset_password_code',
           {
-            email,
+            email: existingUser?.email,
+            phoneNumber: existingUser?.phoneNumber,
             code: confirmationCode,
           },
         ),
@@ -60,8 +68,8 @@ export class ResetPasswordHandler
     this.logger.info('Sending reset password code to notification service');
     // Сохраняем в Redis с TTL только после успешной отправки письма
     await this.redisService.set(
-      `reset-password:${email}`,
-      JSON.stringify({ email, code: confirmationCode }),
+      `reset-password:${email || phoneNumber}`,
+      JSON.stringify({ email, phoneNumber, code: confirmationCode }),
       600, // 10 минут TTL
     );
     this.logger.info('Reset password code saved in Redis');

@@ -25,6 +25,15 @@ export class MailerService {
     };
     await this.transporter.sendMail(message);
   }
+  sendRegistrationSms(phoneNumber: string, code: string) {
+    console.log(phoneNumber, code);
+  }
+  sendResetPasswordSms(phoneNumber: string, code: string) {
+    console.log(phoneNumber, code);
+  }
+  sendLoginSms(phoneNumber: string, code: string) {
+    console.log(phoneNumber, code);
+  }
   async sendResetPasswordEmail(email: string, code: string) {
     const message = {
       from: `"No Reply" <${this.configService.get('SMTP_USER')}>`,

@@ -17,6 +17,9 @@ export class User {
   @Column({ name: 'password_hash' })
   passwordHash: string;
 
+  @Column({ name: 'phone_number', nullable: true })
+  phoneNumber: string;
+
   @Column({ name: 'verification_code', nullable: true })
   verificationCode: string;
 

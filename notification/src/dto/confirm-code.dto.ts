@@ -1,8 +1,13 @@
-import { IsEmail, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class ConfirmDto {
+  @IsOptional()
+  @IsString()
+  phoneNumber: string;
+
+  @IsOptional()
+  @IsString()
   @IsEmail()
-  @IsNotEmpty()
   email: string;
 
   @IsNotEmpty()

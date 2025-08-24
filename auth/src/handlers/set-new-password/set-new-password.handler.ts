@@ -17,17 +17,24 @@ export class SetNewPasswordHandler
     private usersRepository: Repository<User>,
   ) {}
   async execute(command: SetNewPasswordCommand) {
-    const { email, password } = command;
-    this.logger.info(`Setting new password for user ${email}`);
+    const { email, password, phoneNumber } = command;
+    this.logger.info(`Setting new password for user ${email || phoneNumber}`);
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await this.usersRepository.findOne({
-      where: { email },
-    });
+    let user: User | null;
+    if (phoneNumber) {
+      user = await this.usersRepository.findOne({
+        where: { phoneNumber },
+      });
+    } else {
+      user = await this.usersRepository.findOne({
+        where: { email },
+      });
+    }
     if (!user) {
       throw new RpcException('User not found');
     }
     user.passwordHash = passwordHash;
     await this.usersRepository.save(user);
-    this.logger.info(`New password set for user ${email}`);
+    this.logger.info(`New password set for user ${email || phoneNumber}`);
   }
 }

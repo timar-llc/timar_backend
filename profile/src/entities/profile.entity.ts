@@ -32,9 +32,6 @@ export class Profile {
   @Column({ name: 'profile_completeness', nullable: true })
   profileCompleteness: number;
 
-  @Column({ name: 'phone_number', nullable: true })
-  phoneNumber: string;
-
   @Column({ name: 'country_uuid', nullable: true })
   countryUuid: string;
 

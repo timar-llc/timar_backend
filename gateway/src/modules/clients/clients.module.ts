@@ -77,6 +77,23 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         },
         inject: [ConfigService],
       },
+      {
+        name: 'PROJECT_SERVICE',
+        imports: [ConfigModule],
+        useFactory: (configService: ConfigService) => {
+          return {
+            transport: Transport.RMQ,
+            options: {
+              urls: [configService.get('RABBITMQ_SERVER') as string],
+              queue: 'project-service',
+              queueOptions: {
+                durable: false,
+              },
+            },
+          };
+        },
+        inject: [ConfigService],
+      },
     ]),
   ],
   exports: [NestClientsModule],
